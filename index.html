@@ -241,7 +241,7 @@
 // ════════════════════════════════════════════════
 // CONFIGURAÇÃO — troque a senha abaixo
 // ════════════════════════════════════════════════
-const PWD = 'qualisaude2025';
+const PWD_HASH = 'd2b7fb4d721068eea91ee7ebad7690128f109bebf0b9cdcf8cf34ad0bba10d4e';
 const MODS = ['MÓDULO I','MÓDULO II','MÓDULO III','MÓDULO IV',
               'MÓDULO V','MÓDULO VI','MÓDULO VII','MÓDULO VIII','MÓDULO IX'];
 const SK = 'qs_data_v1';
@@ -281,8 +281,11 @@ function closeOverlay() {
   document.getElementById('pwdInput').value = '';
   document.getElementById('pwdErr').textContent = '';
 }
-function checkPwd() {
-  if (document.getElementById('pwdInput').value === PWD) {
+async function checkPwd() {
+  const input = document.getElementById('pwdInput').value;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+  const hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  if (hash === PWD_HASH) {
     adminOk = true;
     closeOverlay();
     document.getElementById('adminPanel').classList.add('on');
