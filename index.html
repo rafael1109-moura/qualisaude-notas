@@ -385,19 +385,24 @@ function loadFile(file) {
         loaded++;
       });
 
-      // Salva localmente (cache) e na nuvem
-      try { localStorage.setItem(SK, JSON.stringify(data)); } catch(_) {}
+      // Gera timestamp da atualização
+      const now = new Date();
+      const nowStr = now.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})
+                   + ' ' + now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+      // Salva localmente (cache) com timestamp
+      const payload = { _updatedAt: nowStr, ...data };
+      try { localStorage.setItem(SK, JSON.stringify(payload)); } catch(_) {}
 
       const status2 = document.getElementById('uploadStatus');
       status2.innerHTML = '<span style="color:var(--yellow)">☁️ Enviando para a nuvem…</span>';
 
-      const ok = await cloudSave(data);
-      const now = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      const ok = await cloudSave(payload);
       if (ok) {
-        document.getElementById('updateText').textContent = 'Atualizado ' + now;
+        document.getElementById('updateText').textContent = 'Atualizado ' + nowStr;
         status2.innerHTML = '<span style="color:var(--green)">✅ Dados salvos na nuvem! Todos os usuários verão os dados atualizados.</span>';
       } else {
-        document.getElementById('updateText').textContent = 'Atualizado ' + now + ' (local)';
+        document.getElementById('updateText').textContent = 'Atualizado ' + nowStr + ' (local)';
         status2.innerHTML = '<span style="color:var(--red)">⚠️ Nuvem não configurada — dados salvos apenas neste navegador. Configure o JSONbin para compartilhar.</span>';
       }
       refreshUploadStatus();
@@ -563,12 +568,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('updateText').textContent = '☁️ Carregando…';
   const cloudData = await cloudLoad();
   if (cloudData && typeof cloudData === 'object' && Object.keys(cloudData).length > 0) {
-    data = cloudData;
+    const { _updatedAt, ...modules } = cloudData;
+    data = modules;
     // Atualiza cache local
-    try { localStorage.setItem(SK, JSON.stringify(data)); } catch(_) {}
+    try { localStorage.setItem(SK, JSON.stringify(cloudData)); } catch(_) {}
     const n = MODS.filter(m => data[m] && data[m].length > 2).length;
     if (n > 0) {
-      document.getElementById('updateText').textContent = '☁️ Dados da nuvem';
+      document.getElementById('updateText').textContent = _updatedAt ? 'Atualizado ' + _updatedAt : '☁️ Dados da nuvem';
       renderTable(0);
       return;
     }
@@ -578,10 +584,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const saved = localStorage.getItem(SK);
     if (saved) {
-      data = JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      const { _updatedAt, ...modules } = parsed;
+      data = modules;
       const n = MODS.filter(m => data[m] && data[m].length > 2).length;
       if (n > 0) {
-        document.getElementById('updateText').textContent = 'Cache local';
+        document.getElementById('updateText').textContent = _updatedAt ? 'Atualizado ' + _updatedAt : 'Cache local';
         renderTable(0);
         return;
       }
