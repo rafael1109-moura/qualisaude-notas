@@ -18,7 +18,7 @@ A motivação para o desenvolvimento surgiu da dificuldade dos alunos em acompan
 
 1. Acesse o site jsonbin.io, crie uma conta e crie um novo Bin com o seguinte conteúdo:
 ```json
-{"init": true}
+{"init": true}```
 2.Copie o BIN ID gerado
 3.Vá em Account → API Keys, crie uma chave e copie
 4.Abra o index.html e preencha as duas linhas:
