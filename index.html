@@ -14,7 +14,7 @@
 <!-- PASSWORD OVERLAY -->
 <div class="overlay" id="overlay">
   <div class="pwd-box">
-    <h3>🔒 Área restrita</h3>
+    <h3>Área restrita</h3>
     <p>Apenas o administrador pode<br>carregar dados no site.</p>
     <div class="pwd-row">
       <input type="password" class="f-input" id="pwdInput" placeholder="Senha…" onkeydown="if(event.key==='Enter')checkPwd()"/>
@@ -184,6 +184,7 @@ async function checkPwd() {
     closeOverlay();
     document.getElementById('adminPanel').classList.add('on');
     refreshUploadStatus();
+    renderTable(curMod);
   } else {
     document.getElementById('pwdErr').textContent = 'Senha incorreta.';
     document.getElementById('pwdInput').select();
@@ -342,7 +343,7 @@ function renderTable(idx) {
   students.forEach(row => {
     html += '<tr class="srow">';
     headers.forEach((h, i) => {
-      html += '<td>' + fmtCell(String(row[i] || '').trim(), i, headers) + '</td>';
+      html += '<td>' + fmtCell(String(row[i] || '').trim(), i, headers, adminOk) + '</td>';
     });
     html += '</tr>';
   });
@@ -354,7 +355,7 @@ function renderTable(idx) {
 // ════════════════════════════════════════════════
 // FORMAT CELL
 // ════════════════════════════════════════════════
-function fmtCell(val, ci, headers) {
+function fmtCell(val, ci, headers, isAdmin) {
   if (!val || val === '') return '<span class="g-x">—</span>';
   const h = String(headers[ci] || '').trim().toUpperCase();
 
@@ -370,6 +371,7 @@ function fmtCell(val, ci, headers) {
   // Conceito
   if (h === 'CONCEITO') {
     const l = val.trim()[0].toUpperCase();
+    if (!isAdmin) return '<span class="p-ok">✓</span>';
     return '<span class="cq cq-' + l + '">' + val + '</span>';
   }
   // TPs — se for número ou data = enviado; vazio = não enviado
@@ -377,15 +379,19 @@ function fmtCell(val, ci, headers) {
     const d = parseDate(val);
     if (d) return '<span class="p-pend">⏳ ' + d + '</span>';   // data = enviado, aguardando correção
     const n = parseFloat(val.replace(',','.'));
-    if (!isNaN(n)) return '<span class="p-ok">✓ ' + val + '</span>'; // nota = corrigido
-    return '<span class="p-no">✗</span>';                            // vazio = não enviado
+    if (!isNaN(n)) {
+      if (!isAdmin) return '<span class="p-ok">✓</span>';        // aluno vê só ✓
+      return '<span class="p-ok">✓ ' + val + '</span>';          // admin vê a nota
+    }
+    return '<span class="p-no">✗</span>';                        // vazio = não enviado
   }
   // Notas (Autoav, Av. Final, Total)
   if (h.includes('AUTOAV') || h.includes('AV.') || h.includes('AV ') || h.includes('TOTAL') || h.includes('FINAL')) {
     const n = parseFloat(val.replace(',','.'));
     if (isNaN(n)) return '<span class="g-x">' + val + '</span>';
+    if (!isAdmin) return '<span class="p-ok">✓</span>';          // aluno vê só ✓
     const cls = n >= 9 ? 'g-a' : n >= 7 ? 'g-b' : n >= 5 ? 'g-c' : 'g-d';
-    return '<span class="' + cls + '">' + val + '</span>';
+    return '<span class="' + cls + '">' + val + '</span>';        // admin vê a nota colorida
   }
   return val;
 }
